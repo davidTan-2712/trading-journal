@@ -791,12 +791,12 @@ export default function JournalDashboard() {
       {formOpen && (
         <div
           style={{ background: "rgba(15,17,25,0.85)" }}
-          className="fixed inset-0 flex items-end justify-center z-50"
+          className="fixed inset-0 flex items-end md:items-center justify-center z-50 md:p-4"
           onClick={() => setFormOpen(false)}
         >
           <div
             style={{ background: C.panel, borderColor: C.hair, maxHeight: "88vh" }}
-            className="w-full max-w-2xl rounded-t-3xl border-t border-l border-r overflow-y-auto"
+            className="w-full max-w-2xl rounded-t-3xl md:rounded-3xl border-t md:border border-l border-r overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-5 pb-3" style={{ borderBottom: `1px solid ${C.hair}` }}>
@@ -898,12 +898,12 @@ export default function JournalDashboard() {
       {journalOpen && (
         <div
           style={{ background: "rgba(15,17,25,0.85)" }}
-          className="fixed inset-0 flex items-end justify-center z-50"
+          className="fixed inset-0 flex items-end md:items-center justify-center z-50 md:p-4"
           onClick={() => setJournalOpen(false)}
         >
           <div
             style={{ background: C.panel, borderColor: C.hair, maxHeight: "88vh" }}
-            className="w-full max-w-2xl rounded-t-3xl border-t border-l border-r overflow-y-auto"
+            className="w-full max-w-2xl rounded-t-3xl md:rounded-3xl border-t md:border border-l border-r overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-5 pb-3" style={{ borderBottom: `1px solid ${C.hair}` }}>
@@ -1043,12 +1043,12 @@ export default function JournalDashboard() {
       {journeysOpen && (
         <div
           style={{ background: "rgba(15,17,25,0.85)" }}
-          className="fixed inset-0 flex items-end justify-center z-50"
+          className="fixed inset-0 flex items-end md:items-center justify-center z-50 md:p-4"
           onClick={() => setJourneysOpen(false)}
         >
           <div
             style={{ background: C.panel, borderColor: C.hair, maxHeight: "88vh" }}
-            className="w-full max-w-2xl rounded-t-3xl border-t border-l border-r overflow-y-auto"
+            className="w-full max-w-2xl rounded-t-3xl md:rounded-3xl border-t md:border border-l border-r overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-5 pb-3" style={{ borderBottom: `1px solid ${C.hair}` }}>
