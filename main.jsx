@@ -1,46 +1,98 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./App.jsx";
+setEntries(nextEntries);
+    try {
+      const res = await window.storage.set(STORAGE_KEY, JSON.stringify(nextEntries), false);
+      if (!res) setSaveError(true);
+      else setSaveError(false);
+    } catch (e) {
+      setSaveError(true);
+    }
+  }
 
-// Thay thế window.storage (chỉ có trong Claude) bằng localStorage của trình duyệt,
-// để app hoạt động độc lập, không cần Claude nữa.
-window.storage = {
-  async get(key) {
+  async function persistJourneys(next) {
+    setJourneys(next);
     try {
-      const v = localStorage.getItem(key);
-      return v !== null ? { key, value: v } : null;
-    } catch (e) {
-      return null;
-    }
-  },
-  async set(key, value) {
-    try {
-      localStorage.setItem(key, value);
-      return { key, value };
-    } catch (e) {
-      return null;
-    }
-  },
-  async delete(key) {
-    try {
-      localStorage.removeItem(key);
-      return { key, deleted: true };
-    } catch (e) {
-      return null;
-    }
-  },
-  async list(prefix) {
-    try {
-      const keys = Object.keys(localStorage).filter((k) => !prefix || k.startsWith(prefix));
-      return { keys };
-    } catch (e) {
-      return null;
-    }
-  },
-};
+      await window.storage.set(JOURNEYS_KEY, JSON.stringify(next), false);
+    } catch (e) {}
+  }
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+  async function setGoalPersisted(g) {
+    setGoal(g);
+    try {
+      await window.storage.set(GOAL_KEY, JSON.stringify(g), false);
+    } catch (e) {}
+  }
+
+  async function saveCurrentAndStartNew() {
+    const name = newJourneyName.trim() || `Hành trình ${journeys.length + 1}`;
+    const archived = {
+      id: String(Date.now()),
+      name,
+      goal,
+      entries: sorted,
+      savedAt: todayISO(),
+    };
+    const nextJourneys = [...journeys, archived];
+    await persistJourneys(nextJourneys);
+    await persist([]);
+    await setGoalPersisted(Number(newJourneyGoal) || GOAL_DEFAULT);
+    setNewJourneyName("");
+    setNewJourneyGoal(String(GOAL_DEFAULT));
+    setSaveJourneyMode(false);
+    setJourneysOpen(false);
+  }
+
+  async function restoreJourney(j) {
+    const withoutRestored = journeys.filter((x) => x.id !== j.id);
+    let nextJourneys = withoutRestored;
+    if (sorted.length) {
+      nextJourneys = [
+        ...withoutRestored,
+        { id: String(Date.now()), name: `(Tự động lưu) ${fmtDateVN(todayISO())}`, goal, entries: sorted, savedAt: todayISO() },
+      ];
+    }
+    await persistJourneys(nextJourneys);
+    await persist(j.entries);
+    await setGoalPersisted(j.goal);
+    setJourneysOpen(false);
+  }
+
+  const sorted = useMemo(
+    () => [...entries].sort((a, b) => (a.date < b.date ? -1 : 1)),
+    [entries]
+  );
+
+  const totalPnL = useMemo(() => sorted.reduce((s, e) => s + Number(e.pnl || 0), 0), [sorted]);
+  const winCount = sorted.filter((e) => Number(e.pnl) > 0).length;
+  const lossCount = sorted.filter((e) => Number(e.pnl) < 0).length;
+  const beCount = sorted.filter((e) => Number(e.pnl) === 0).length;
+
+  const checklistScore = (e) => {
+    const vals = CHECKLIST.map((c) => !!e.checklist?.[c.id]);
+    return vals.filter(Boolean).length / CHECKLIST.length;
+  };
+
+  const streak = useMemo(() => {
+    let s = 0;
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      if (checklistScore(sorted[i]) === 1) s++;
+      else break;
+    }
+    return s;
+  }, [sorted]);
+
+  const chartData = useMemo(() => {
+    let running = 0;
+    return sorted.map((e, i) => {
+      running += Number(e.pnl || 0);
+      return {
+        label: fmtDateVN(e.date).slice(0, 5),
+        pnl: Number(e.pnl || 0),
+        cumulative: running,
+        day: i + 1,
+      };
+    });
+  }, [sorted]);
+
+  const progress = Math.max(0, Math.min(1, totalPnL / goal));
+  const entryMap = useMemo(() => Object.fromEntries(sorted.map((e) => [e.date, e])), [sorted]);
+  const startDate = sorted.length ? sorted[0].date : viewDate;
